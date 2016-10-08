@@ -33,12 +33,12 @@ void getMsg()
 int main()
 {
     Chat userEntry;
-    cout << "\t\t\t\tFileChat\n\n";
-    cout << "\t\tGrade 12 Semester 2 Project\n\n\n";
-    cout << "Enter the username you wish to use: ";
+    std::cout << "\t\t\t\tFileChat\n\n";
+    std::cout << "\t\tGrade 12 Semester 2 Project\n\n\n";
+    std::cout << "Enter the username you wish to use: ";
     gets(userEntry.username);
     // need to do some sort of loop her;
-    cout << "Message: "
+    std::cout << "Message: ";
     gets(userEntry.message);
 
     msgToFile(userEntry);
