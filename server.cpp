@@ -4,8 +4,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
+#include <cstdio>
 
 #define BUFSIZE 1024
 
@@ -31,7 +32,7 @@ int main()
         cout << "[*] Socket created successfully." << endl;
 
     serverAddr.sin_family = AF_INET;
-    sererAddr.sin_addr.s_addr = htons(INADDR_ANY);
+    serverAddr.sin_addr.s_addr = htons(INADDR_ANY);
     serverAddr.sin_port = htons(port);
 
     if((bind(client, (struct sockaddr*)&serverAddr, sizeof(serverAddr))) < 0)
