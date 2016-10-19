@@ -18,22 +18,25 @@ int main()
     int port = 1337;
     int isExit = 0;
     char buffer[BUFSIZE];
-    char* ip = ""; /* fill this in later */
+    char* ip = "127.0.0.1"; /* fill this in later */
 
     struct sockaddr_in serverAddr; /* something for the server address AFAIK :P */
 
     // the socket gets created here
-    client = socket(AF_INET, SOCK_STREAM, 0) /* AF_INET is ipv4 protocol,
+    client = socket(AF_INET, SOCK_STREAM, 0); /* AF_INET is ipv4 protocol,
                                              and SOCK_STREAM is for sending TCP packets */
 
     if(client < 0) // since socket() will return -1 if the call fails
     {
         cout << "[!] Error establishing socket." << endl; /* metasploit style :) */
+        exit(0);
     }
 
-    cout << "[*] Socket client has been created succesfully." << endl;
+    else
+        cout<< "[*] Socket client has been created successfully." << endl;
 
     serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr=inet_addr(ip);
     serverAddr.sin_port = htons(port); // htons() converts port number to network byte order from host byte order
 
     // connecting to the socket happens here
@@ -49,22 +52,26 @@ int main()
     cout << "[*] Enter your username" << endl;
     cout << "Username: " << endl;
     gets(username);
-    cout <<"[!] Enter @ (i.e., Shift + 2), to end this connection" << endll;
+    cout <<"[!] Enter ~ (i.e., Shift + 2), to end this connection" << endl;
 
     // client's message goes first
 
     do{
-        cout << username << ": " << endl;
+        cout << username << ": ";
         do{
             cin >> buffer;
             send(client, buffer, BUFSIZE, 0);
-            if(*buffer = '@'){
-                send(client)
+            if(*buffer = '~'){
+                send(client, buffer, BUFSIZE, 0);
+                *buffer = ' ';
+                isExit = 1;
             }
-        }
-    }
+        }while(*buffer != 0);
+    }while(isExit == 0);
 
+    cout << "[*] Connection terminated." << endl;
 
-
+    close(client);
+    return 0;
 
 }
