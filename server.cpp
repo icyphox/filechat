@@ -4,99 +4,106 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <cstdlib>
+#include <stdlib.h>
 #include <unistd.h>
-#include <cstdio>
 
-#define BUFSIZE 1024
 
 using namespace std;
 
 int main()
 {
     int client, server;
-    int port = 1337;
-    int isExit = 0;
+    int port = 1500;
+    int BUFSIZE =  1024;
+    bool isExit = false;
     char buffer[BUFSIZE];
-    char username[30];
-    struct sockaddr_in serverAddr;
+
+    struct sockaddr_in server_addr;
     socklen_t size;
 
-    if(client < 0)
+    client = socket(AF_INET, SOCK_STREAM, 0);
+
+    if (client < 0)
     {
-        cout << "[!] Error creating socket." << endl;
-        exit(0);
+        cout << "[!]Error establishing socket." << endl;
+        exit(1);
     }
 
-    else
-        cout << "[*] Socket created successfully." << endl;
+    
 
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = htons(INADDR_ANY);
-    serverAddr.sin_port = htons(port);
+    cout << "[*] Socket server has been created." << endl;
 
-    if((bind(client, (struct sockaddr*)&serverAddr, sizeof(serverAddr))) < 0)
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htons(INADDR_ANY);
+    server_addr.sin_port = htons(port);
+
+
+    if ((bind(client, (struct sockaddr*)&server_addr,sizeof(server_addr))) < 0)
     {
-        cout << "[!] Error binding connection, the socket already exists." << endl;
+        cout << "[!] Error binding connection, the socket has already been established..." << endl;
         return -1;
     }
 
-    size = sizeof(serverAddr);
-    cout << "[*] Awaiting client connection." << endl;
 
-    listen(client, 1); // listening for 1 client
+    size = sizeof(server_addr);
+    cout << "[*] Looking for clients." << endl;
+
+    listen(client, 1);
+
 
     int clientCount = 1;
-    server = accept(client, (struct sockaddr*)&serverAddr, &size); // you need to accept a connection, once you get one.
+    server = accept(client,(struct sockaddr *)&server_addr,&size);
 
-    if(server < 0)
-        cout << "[!] Error accepting connection." << endl;
+    // first check if it is valid or not
+    if (server < 0)
+        cout << "[!] Error accepting client connection." << endl;
 
-    while(server > 0)
+    while (server > 0)
     {
-        strcpy(buffer, "[:)] Server connected! \n");
-        cout << "[*] Enter your username" << endl;
-        gets(username);
+        strcpy(buffer, "[:)] Server connected!");
         send(server, buffer, BUFSIZE, 0);
-        cout << "[*] Connected with client " << clientCount << endl;
-        cout << "[*] Enter ~ (Shift + `) to end this connection." << endl;
+        cout << "[*] Connected with the client. " << clientCount << endl;
+        cout << "[*] Enter ~ to end the connection." << endl;
 
-        cout << "Client: ";  // need to recv the client username prior to this, so as to display it here
-        do{
+      
+
+        cout << "Client: ";
+        do {
             recv(server, buffer, BUFSIZE, 0);
             cout << buffer << " ";
-            if(*buffer == '~'){
-                *buffer = ' ';
-                isExit = 1;
+            if (*buffer == '#') {
+                *buffer = '*';
+                isExit = true;
             }
-        }while(*buffer != ' ');
+        } while (*buffer != '*');
 
-        do{
-            cout << "\n" << username << ": ";
-            do{
+        do {
+            cout << "\nServer: ";
+            do {
                 cin >> buffer;
                 send(server, buffer, BUFSIZE, 0);
-                if(*buffer == '~'){
+                if (*buffer == '#') {
                     send(server, buffer, BUFSIZE, 0);
-                    *buffer = ' ';
-                    isExit = 1;
+                    *buffer = '*';
+                    isExit = true;
                 }
-            }while(*buffer != ' ');
+            } while (*buffer != '*');
 
-            cout << "Client: "; // need to get the client username here too
-            do{
+            cout << "Client: ";
+            do {
                 recv(server, buffer, BUFSIZE, 0);
                 cout << buffer << " ";
-                if(*buffer == '~'){
-                    *buffer == ' ';
-                    isExit =  1;
+                if (*buffer == '#') {
+                    *buffer == '8';
+                    isExit = true;
                 }
-            }while(*buffer != ' ');
-        }while(isExit != 0);
+            } while (*buffer != '*');
+        } while (!isExit);
 
-        cout << "\n [*] Connection terminated with IP " << inet_ntoa(serverAddr.sin_addr); //inet_ntoa() converts packet data to IP (apparently :D)
+        cout << "[!] Connection terminated with IP " << inet_ntoa(server_addr.sin_addr);
         close(server);
-        isExit = 0;
+        isExit = false;
         exit(1);
     }
 

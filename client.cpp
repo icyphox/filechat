@@ -1,77 +1,81 @@
+
 #include <iostream>
-#include <fstream>
-#include <cstdio>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <unistd.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <cstdlib>
+#include <stdlib.h>
+#include <unistd.h>
+#include <netdb.h>
 
-#define BUFSIZE 1024
+
 
 using namespace std;
 
 int main()
 {
     int client;
-    char username[30];
-    int port = 1337;
-    int isExit = 0;
+    int port = 1500; 
+    int BUFSIZE = 1024;
+    bool isExit = false;
     char buffer[BUFSIZE];
-    char* ip = "127.0.0.1"; /* fill this in later */
+    char* ip = "127.0.0.1";
 
-    struct sockaddr_in serverAddr; /* something for the server address AFAIK :P */
+    struct sockaddr_in server_addr;
 
-    // the socket gets created here
-    client = socket(AF_INET, SOCK_STREAM, 0); /* AF_INET is ipv4 protocol,
-                                             and SOCK_STREAM is for sending TCP packets */
+    client = socket(AF_INET, SOCK_STREAM, 0);
 
-    if(client < 0) // since socket() will return -1 if the call fails
+    if (client < 0) 
     {
-        cout << "[!] Error establishing socket." << endl; /* metasploit style :) */
-        exit(0);
+        cout << "[!] Error creating socket." << endl;
+        exit(1);
     }
 
-    else
-        cout<< "[*] Socket client has been created successfully." << endl;
+    cout << "[*] Socket client has been created." << endl;
 
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr=inet_addr(ip);
-    serverAddr.sin_port = htons(port); // htons() converts port number to network byte order from host byte order
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
 
-    // connecting to the socket happens here
-    if(connect(client, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == 0)
-    {
-        cout << "[*] Connection to the server port number " << port << endl;
-    }
+    if (connect(client,(struct sockaddr *)&server_addr, sizeof(server_addr)) == 0)
+        cout << "[*] Connection to the server port number: " << port << endl;
 
-    // the receiving happens here
-    cout << "[*] Waiting for confirmation from server" << endl;
+    cout << "[*] Awaiting confirmation from the server." << endl; 
     recv(client, buffer, BUFSIZE, 0);
-    cout << "[:)] Connection confirmed!" << endl;
-    cout << "[*] Enter your username" << endl;
-    cout << "Username: " << endl;
-    gets(username);
-    cout <<"[!] Enter ~ (i.e., Shift + 2), to end this connection" << endl;
+    cout << "[:)] Connection confirmed!" << endl;;
 
-    // client's message goes first
+    cout << "[*] Enter ~ to end this connection." << endl;
 
-    do{
-        cout << username << ": ";
-        do{
+
+    do {
+        cout << "Client: "; // We'll figure out the sending of client and server username later.
+        do {
             cin >> buffer;
             send(client, buffer, BUFSIZE, 0);
-            if(*buffer = '~'){
+            if (*buffer == '#') {
                 send(client, buffer, BUFSIZE, 0);
-                *buffer = ' ';
-                isExit = 1;
+                *buffer = '*'; // Have to end each message with this character. Can't seem to figure out a workaround.
+                isExit = true;
             }
-        }while(*buffer != 0);
-    }while(isExit == 0);
+        } while (*buffer != 42);
 
-    cout << "[*] Connection terminated." << endl;
+        cout << "Server: ";
+        do {
+            recv(client, buffer, BUFSIZE, 0);
+            cout << buffer << " ";
+            if (*buffer == '#') {
+                *buffer = '*'; // Same here.
+                isExit = true;
+            }
+
+        } while (*buffer != 42);
+        cout << endl;
+
+    } while (!isExit);
+
+
+    cout << "[!] Connection terminated with server.";
 
     close(client);
     return 0;
-
 }
