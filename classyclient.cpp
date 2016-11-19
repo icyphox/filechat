@@ -2,14 +2,24 @@
 #include <string.h>
 #include <stdio.h>
 #include <winsock2.h>
+#include <time.h>
+#include <string.h>
 
 using namespace std;
+
+struct Log
+{
+    char User[120];
+    char Date[120];
+    char message[1024];
+};
 
 class Client{
 private:
     SOCKET client;
     int port = 1500;
     char username[120];
+    char extUsername[120];
     int BUFSIZE = 1024;
     bool isExit = false;
     char buffer[1024];
@@ -17,14 +27,23 @@ private:
     struct sockaddr_in serverAddr;
     WSADATA wsa;
     void KillSock();
+    char* getTime();
 
 public:
 	int InitWinsock();
 	void CreateSocket();
 	int Connekt();
+	// void InitLog();
 	void sendRecvMsg();
 
 };
+/*
+void Client::InitLog()
+{
+    fstream ifof;
+    ifof.open("Chatlog.DAT", ios::in|ios::out|ios::binary|ios::nocreate|ios::ate);
+}
+*/
 
 int Client::InitWinsock()
 {
@@ -40,7 +59,15 @@ int Client::InitWinsock()
 
     cout << "[:)] Initialised!" << endl;
 }
+char* Client::getTime()
+{
+    time_t rawtime;
+    struct tm * timeinfo;
 
+    time ( &rawtime );
+    timeinfo = localtime ( &rawtime );
+    return asctime(timeinfo);
+}
 void Client::CreateSocket()
 {
 	if((client = socket(AF_INET , SOCK_STREAM , 0 )) == INVALID_SOCKET)
@@ -80,8 +107,18 @@ void Client::sendRecvMsg()
     // We need to replace ^ with enter
     // client's message goes first
     cout<<"[*] Client's message goes first. Say hi!"<<endl;
-   do {
-        cout <<username<<": ";
+    int sentUserName = 0, recvusername = 0;
+    char toSend[120];
+    strcat(toSend, "%");
+    strcat(toSend, username);
+    do {
+        if(sentUserName == 0)
+        {
+            send(client, toSend, BUFSIZE, 0);
+            sentUserName = 1;
+            continue;
+        }
+        cout <<"You: ";
         do {
             cin >> buffer;
             send(client, buffer, BUFSIZE, 0);
@@ -91,8 +128,21 @@ void Client::sendRecvMsg()
                 isExit = true;
             }
         } while (*buffer != 42);
-
-        cout << "Server: ";
+        if(recvusername == 0)
+        {
+            recv(client, buffer, BUFSIZE, 0);
+            if(buffer[0]=='%')
+            {
+                for(int i=1; i<strlen(buffer); i++)
+                {
+                    extUsername[i-1]=buffer[i];
+                }
+                extUsername[strlen(buffer)]='\0';
+            }
+            recvusername = 1;
+            continue;
+        }
+        cout <<extUsername<<": ";
         do {
             recv(client, buffer, BUFSIZE, 0);
             cout << buffer << " ";

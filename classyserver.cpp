@@ -10,6 +10,8 @@ class Server{
 private:
     struct sockaddr_in server_addr;
     int sze, clientCount;
+    char username[120];
+    char extUsername[120];
 
     WSADATA wsa;
 
@@ -108,10 +110,32 @@ void Server::sendRecvMsg()
         send(server, buffer, BUFSIZE, 0);
         cout << "[*] Connected with the client. " << clientCount << endl;
         cout << "[*] Enter # (i.e. Shift + 3), to end the connection." << endl;
+        cout << "[*] Enter your username" << endl;
+        gets(username);
+        char toSend[120];
+        strcat(toSend, "%");
+        strcat(toSend, username);
+        int receivedName = 0, sentName = 0;
+        if(receivedName == 0)
+        {
+            recv(server, buffer, BUFSIZE, 0);
+            if(buffer[0]=='%')
+            {
+                for(int i=1; i<strlen(buffer); i++)
+                {
+                    extUsername[i-1]=buffer[i];
+                }
+                extUsername[strlen(buffer)]='\0';
+            }
+            receivedName = 1;
 
-
-
-        cout << "Client: ";
+        }
+        if(sentName == 0)
+        {
+            send(server, toSend, BUFSIZE, 0);
+            sentName = 1;
+        }
+        cout << extUsername << ": ";
         do {
             recv(server, buffer, BUFSIZE, 0);
 
@@ -123,23 +147,13 @@ void Server::sendRecvMsg()
         } while (*buffer != '*');
 
         do {
-            cout << "\nServer: ";
+            cout << "\nYou: ";
             do {
                 cin >> buffer;
                 send(server, buffer, BUFSIZE, 0);
                 if (*buffer == '#') {
                     send(server, buffer, BUFSIZE, 0);
                     *buffer = '*';
-                    isExit = true;
-                }
-            } while (*buffer != '*');
-
-            cout << "Client: ";
-            do {
-                recv(server, buffer, BUFSIZE, 0);
-                cout << buffer << " ";
-                if (*buffer == '#') {
-                    *buffer == '*';
                     isExit = true;
                 }
             } while (*buffer != '*');
