@@ -24,7 +24,7 @@ int main()
         cout << "[!] Failed. Error Code:" << WSAGetLastError();
         return 1;
     } /* AF_INET is ipv4 protocol,
-                                             and SOCK_STREAM is for sending TCP packets */
+        and SOCK_STREAM is for sending TCP packets */
      // since socket() will return -1 if the call fails
 
 
@@ -38,9 +38,9 @@ int main()
     }
 
     else
-        cout<< "[*] Socket client has been created successfully." << endl;
+        cout << "[*] Socket client has been created successfully." << endl;
     //accept IP address of the target
-    cout<<"[*] Enter the IP address of the recipient: "<<endl;
+    cout <<"[*] Enter the IP address of the recipient: "<< endl;
     gets(ip);
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr=inet_addr(ip);
@@ -48,7 +48,8 @@ int main()
     // connecting to the socket happens here
     if(connect(client, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
     {
-        cout << "[!] Failed to connect to " << port << endl;
+        cout<<"connect function failed with error: \n"<<WSAGetLastError();
+        cout << "[!] Failed to connect to port " << port << " on " << ip << endl;
         return 1;
     }
     // the receiving happens here
@@ -58,7 +59,7 @@ int main()
     cout << "[*] Enter your username" << endl;
     cout << "Username: " << endl;
     gets(username);
-    cout <<"[*] Please append all your messages with a #" << endl;
+    cout <<"[*] Please append all your messages with a *" << endl;
     // We need to replace ^ with enter
     // client's message goes first
     cout<<"[*] Client's message goes first. Say hi!"<<endl;
@@ -91,5 +92,6 @@ int main()
     cout << "[!] Connection terminated with server.";
 
     closesocket(client);
+    WSACleanup();
     return 0;
 }

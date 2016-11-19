@@ -107,6 +107,7 @@ int main()
 
         cout << "[!] Connection terminated with IP " << inet_ntoa(server_addr.sin_addr);
         closesocket(server);
+        WSACleanup();
         isExit = false;
         exit(1);
     }
