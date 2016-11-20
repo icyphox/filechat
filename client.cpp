@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <winsock2.h>
 #include <time.h>
+#include <fstream>
 #include <string.h>
 
 using namespace std;
@@ -10,12 +11,18 @@ using namespace std;
 struct Log
 {
     char User[120];
-    char Date[120];
+    int mon;
+    int day;
+    int year;
+    int hour;
+    int minute;
+    int sec;
     char message[1024];
 };
 
 class Client{
 private:
+    fstream ifof;
     SOCKET client;
     int port = 1500;
     char username[120];
@@ -27,26 +34,31 @@ private:
     struct sockaddr_in serverAddr;
     WSADATA wsa;
     void KillSock();
-    char* getTime();
 
 public:
 	int InitWinsock();
 	void CreateSocket();
 	void SendUsername();
 	void RecvUsername();
+	void CloseLog();
+	void InitLog(char*);
+	void writeLog(char*, char*);
 	int Connekt();
-	// void InitLog();
 	void sendRecvMsg();
 
 };
-/*
-void Client::InitLog()
+void Client::InitLog(char* name)
 {
-    fstream ifof;
-    ifof.open("Chatlog.DAT", ios::in|ios::out|ios::binary|ios::nocreate|ios::ate);
+    char filename[120];
+    strcpy(filename, name);
+    strcat(filename, ".DAT");
+    ifof.open(filename, ios::in|ios::out|ios::binary|ios::ate);
 }
-*/
 
+void Client::closeLog()
+{
+    ifof.close();
+}
 int Client::InitWinsock()
 {
 	cout << "[*] Initialising Winsock." << endl;
@@ -60,15 +72,6 @@ int Client::InitWinsock()
 
 
     cout << "[:)] Initialised!" << endl;
-}
-char* Client::getTime()
-{
-    time_t rawtime;
-    struct tm * timeinfo;
-
-    time ( &rawtime );
-    timeinfo = localtime ( &rawtime );
-    return asctime(timeinfo);
 }
 
 void Client::SendUsername()
@@ -121,6 +124,24 @@ int Client::Connekt()
     }
 }
 
+void Client::writeLog(char* mesg, char* uname)
+{
+    Log l1;
+    strcpy(l1.User, username);
+    time_t rawtime;
+    struct tm * timeinfo;
+    time ( &rawtime );
+    timeinfo = localtime ( &rawtime );
+    l1.year = timeinfo->tm_year + 1900;
+    l1.mon = timeinfo->tm_mon + 1;
+    l1.day = timeinfo->tm_mday;
+    l1.hour = timeinfo->tm_hour;
+    l1.minute = timeinfo->tm_min;
+    l1.sec = timeinfo->tm_sec;
+    strcpy(l1.message, mesg);
+    ifof.write((char*)&l1, sizeof(Log));
+}
+
 void Client::sendRecvMsg()
 {
 	cout << "[*] Waiting for confirmation from server." << endl;
@@ -130,6 +151,7 @@ void Client::sendRecvMsg()
     cout << "[*] Waiting for username exchange...please hold on." <<endl;
     RecvUsername();
     cout << "[:)] Username received! " <<endl;
+    InitLog(extUsername);
     cout <<"[*] Please append all your messages with a *" << endl;
     cout<<"[*] Client's message goes first. Say hi!"<<endl;
     do {
@@ -137,6 +159,8 @@ void Client::sendRecvMsg()
         do {
             cin >> buffer;
             send(client, buffer, BUFSIZE, 0);
+            buffer[strlen(buffer)-2] = '\0';
+            writeLog(username, buffer);
             if (*buffer == '#') {
                 send(client, buffer, BUFSIZE, 0);
                 *buffer = '*';
@@ -147,6 +171,7 @@ void Client::sendRecvMsg()
         do {
             recv(client, buffer, BUFSIZE, 0);
             cout << buffer << " ";
+            writeLog(username, buffer);
             if (*buffer == '#') {
                 *buffer = '*';
                 isExit = true;
@@ -159,6 +184,7 @@ void Client::sendRecvMsg()
 
 void Client::KillSock()
 {
+        CloseLog();
         closesocket(client);
 	    WSACleanup();
         cout << "[!] Connection terminated with server.";

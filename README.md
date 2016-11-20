@@ -1,8 +1,12 @@
 #filechat
-Semester II Computer Science Project for CBSE Grade 12. (LOL, sounds like something a school would say)
+Semester II Computer Science Project for CBSE Grade 12. (National Public School - HSR Layout, Bangalore - IND)
 
 ###Our Idea
-We're doing the typical chat program using sockets, in C++, but with a twist. 
-The chat will be logged to a text file, yeah, that's nothing great. But the real lol is, we're displaying the recieved message by retreiving it from the text file (yus, 'tis sad, I know). We have to do this, like it or not, 'cuz we **need** to have some sorta file handling shyt in it.
+We're doing a pretty simple chatting program (that even works through the interwebz if you have port-forwarding), using C++ (but mostly C stuff).
+It logs to a binary file, so that takes care of the file handling that we're "supposed to implement".
+We will also include chat history manipulation in order to also have "all forms of file handling".
+Feel free to build and fork. 
+
+OSS for the win! 
 
 
