@@ -20,6 +20,7 @@ struct Log
     char message[1024];
 };
 fstream ifof;
+ofstream cr8;
 
 /* BEGIN SERVER CLASS DEFINITION
  *******************************************
@@ -66,6 +67,17 @@ void Server::InitWinsock(){
     cout << "[:)] Initialised!" << endl;
 }
 
+void Server::InitLog(char* name)
+{
+    char filename[120];
+    strcpy(filename, name);
+    strcat(filename, ".bin");
+    cr8.open(filename, ios::out);
+    cr8.close();
+    ifof.open(filename, ios::in|ios::out|ios::binary|ios::ate);
+    cout << "[:)] Log initialized" <<endl;
+}
+
 void Server::writeLog(char* mesg, char* uname)
 {
     Log l1;
@@ -81,15 +93,14 @@ void Server::writeLog(char* mesg, char* uname)
     l1.minute = timeinfo->tm_min;
     l1.sec = timeinfo->tm_sec;
     strcpy(l1.message, mesg);
+    int pointer = ifof.tellp();
     ifof.write((char*)&l1, sizeof(Log));
-}
+    cout << "[:)] Message written to log" <<endl;
+    ifof.seekg(pointer);
+    Log l2;
+    ifof.read((char*)&l2, sizeof(Log));
+    cout<<"READ: "<<l2.message<<endl;
 
-void Server::InitLog(char* name)
-{
-    char filename[120];
-    strcpy(filename, name);
-    strcat(filename, ".DAT");
-    ifof.open(filename, ios::in|ios::out|ios::binary|ios::ate);
 }
 
 void Server::CloseLog()
@@ -102,7 +113,6 @@ void Server::CreateSocket(){
     {
         cout << "[!] Could not create socket: " << WSAGetLastError();
     }
-
     cout << "[*] Socket server has been created." << endl;
 }
 
@@ -170,30 +180,37 @@ void Server::sendRecvMsg()
         InitLog(extUsername);
         cout << "[*] Enter # (i.e. Shift + 3), to end the connection." << endl;
         cout<<"Client's message goes first. Wait for a message..."<<endl<<endl;
+        char msg[1024];
        do {
+            fflush(stdin);
             cout << extUsername <<": ";
+            msg[0]='\0';
              do {
                  recv(server, buffer, BUFSIZE, 0);
                  cout << buffer << " ";
-                 writeLog(username, buffer);
+                 strcat(msg, buffer);
+                 strcat(msg, " ");
                  if (*buffer == '#') {
                      *buffer == '*';
                      isExit = true;
                  }
-             } while (*buffer != '*');
-             cout << endl << "You: ";
-             do {
-                 cin >> buffer;
+             } while (*buffer != 10 && *buffer != 13);
+             //writeLog(msg, extUsername);
+             msg[0] = '\0';
+             cout  << "You: ";
+            fflush(stdin);
+            do {
+                 fgets(buffer, 1024, stdin);
                  send(server, buffer, BUFSIZE, 0);
-                 writeLog(username, buffer);
+                 strcat(msg, buffer);
+                 strcat(msg, " ");
                  if (*buffer == '#') {
-                     send(server, buffer, BUFSIZE, 0);
+                     send(server, "#", BUFSIZE, 0);
                      *buffer = '*';
                      isExit = true;
                  }
-             } while (*buffer != '*');
-
-
+             } while (*buffer != 10 && *buffer != 13);
+             // writeLog(msg, username);
          } while (!isExit);
     killSock();
     }while(!isExit);
@@ -325,7 +342,7 @@ void Client::writeLog(char* mesg, char* uname)
 
 void Client::sendRecvMsg()
 {
-	cout << "[*] Waiting for confirmation from server." << endl;
+    cout << "[*] Waiting for confirmation from server." << endl;
     recv(client, buffer, BUFSIZE, 0);
     cout << "[:)] Connection confirmed!" << endl;
     SendUsername();
@@ -334,20 +351,20 @@ void Client::sendRecvMsg()
     cout << "[:)] Username received! " <<endl;
     InitLog(extUsername);
     cout <<"[*] Please append all your messages with a *" << endl;
-    cout<<"[*] Client's message goes first. Say hi!"<<endl;
+    cout<<"[*] Client's message goes first. Say hi!"<<endl<<endl;
     do {
-        cout << endl <<"You: ";
+        cout <<"You: ";
+        fflush(stdin);
         do {
-            cin >> buffer;
+            fgets(buffer, 1024, stdin);
             send(client, buffer, BUFSIZE, 0);
-            buffer[strlen(buffer)-2] = '\0';
             writeLog(username, buffer);
             if (*buffer == '#') {
                 send(client, buffer, BUFSIZE, 0);
                 *buffer = '*';
                 isExit = true;
             }
-        } while (*buffer != 42);
+        } while (*buffer != 10 && *buffer != 13);
         cout << extUsername << ": ";
         do {
             recv(client, buffer, BUFSIZE, 0);
@@ -357,7 +374,7 @@ void Client::sendRecvMsg()
                 *buffer = '*';
                 isExit = true;
             }
-        } while (*buffer != 42);
+        } while (*buffer != 10 && *buffer != 13);
     } while (!isExit);
 
     KillSock();
