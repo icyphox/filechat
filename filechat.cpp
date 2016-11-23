@@ -185,11 +185,14 @@ void Server::InitLog(char* name)
     strcat(filename, ".hist");
     cr8.open(filename, ios::out|ios::app);
     cr8.close();
-    ifof.open(filename, ios::in|ios::out|ios::binary|ios::app);
 }
 
 void Server::writeLog(char* mesg, char* uname)
 {
+    char filename[120];
+    strcpy(filename, extUsername);
+    strcat(filename, ".hist");
+    ifof.open(filename, ios::in|ios::out|ios::binary|ios::app);
     Log l1;
     strcpy(l1.User, uname);
     time_t rawtime;
@@ -204,6 +207,7 @@ void Server::writeLog(char* mesg, char* uname)
     l1.sec = timeinfo->tm_sec;
     strcpy(l1.message, mesg);
     ifof.write((char*)&l1, sizeof(Log));
+    ifof.close();
 }
 
 void Server::CloseLog()
@@ -291,14 +295,14 @@ void Server::sendRecvMsg()
             msg[0]='\0';
              do {
                  recv(server, buffer, BUFSIZE, 0);
-                 cout << buffer << " ";
+                 cout << buffer;
                  strcat(msg, buffer);
-                 strcat(msg, " ");
                  if (*buffer == '#') {
                      *buffer == '*';
                      isExit = true;
                  }
              } while (*buffer != 10 && *buffer != 13);
+             if(strcmp(msg, "")==0)
              writeLog(msg, extUsername);
              msg[0] = '\0';
              timeStamp();
@@ -308,13 +312,13 @@ void Server::sendRecvMsg()
                  fgets(buffer, 1024, stdin);
                  send(server, buffer, BUFSIZE, 0);
                  strcat(msg, buffer);
-                 strcat(msg, " ");
                  if (*buffer == '#') {
                      send(server, "#", BUFSIZE, 0);
                      *buffer = '*';
                      isExit = true;
                  }
              } while (*buffer != 10 && *buffer != 13);
+             if(strcmp(msg, "")==0)
               writeLog(msg, "You");
          } while (!isExit);
     killSock();
@@ -370,7 +374,6 @@ void Client::InitLog(char* name)
     strcat(filename, ".hist");
     cr8.open(filename, ios::out|ios::app);
     cr8.close();
-    ifof.open(filename, ios::in|ios::out|ios::binary|ios::app);
 }
 
 void Client::CloseLog()
@@ -438,6 +441,10 @@ int Client::Connekt()
 
 void Client::writeLog(char* mesg, char* uname)
 {
+    char filename[120];
+    strcpy(filename, extUsername);
+    strcat(filename, ".hist");
+    ifof.open(filename, ios::in|ios::out|ios::binary|ios::app);
     Log l1;
     strcpy(l1.User, uname);
     time_t rawtime;
@@ -452,6 +459,7 @@ void Client::writeLog(char* mesg, char* uname)
     l1.sec = timeinfo->tm_sec;
     strcpy(l1.message, mesg);
     ifof.write((char*)&l1, sizeof(Log));
+    ifof.close();
 }
 
 void Client::sendRecvMsg()
@@ -474,7 +482,6 @@ void Client::sendRecvMsg()
         do {
             fgets(buffer, 1024, stdin);
             strcat(msg, buffer);
-            strcat(msg, " ");
             send(client, buffer, BUFSIZE, 0);
             if (*buffer == '#') {
                 send(client, buffer, BUFSIZE, 0);
@@ -482,20 +489,21 @@ void Client::sendRecvMsg()
                 isExit = true;
             }
         } while (*buffer != 10 && *buffer != 13);
+        if(strcmp(msg, "")==0)
         writeLog(msg, "You");
         timeStamp();
         cout << extUsername << ": ";
         msg[0]='\0';
         do {
             recv(client, buffer, BUFSIZE, 0);
-            cout << buffer << " ";
+            cout << buffer;
             strcat(msg, buffer);
-            strcat(msg, " ");
             if (*buffer == '#') {
                 *buffer = '*';
                 isExit = true;
             }
         } while (*buffer != 10 && *buffer != 13);
+        if(strcmp(msg, "")==0)
         writeLog(msg, extUsername);
     } while (!isExit);
 
