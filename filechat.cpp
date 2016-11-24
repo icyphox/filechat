@@ -33,6 +33,8 @@ void dispChat(char* name, int ch=0)
     while(fin)
     {
         fin.read((char*)&l1, sizeof(Log));
+		if(fin.eof())
+			break;
         cout<<"["<<l1.hour<<":"<<l1.minute<<":"<<l1.sec<<"|";
         cout<<l1.day<<"/"<<l1.mon<<"/"<<l1.year<<"] ";
         cout<<l1.User<<": "<<l1.message<<endl;
@@ -221,11 +223,10 @@ void Server::CreateSocket(){
 
 void Server::killSock(){
         CloseLog();
-        cout << "[!] Connection terminated with IP " << inet_ntoa(server_addr.sin_addr);
+        cout << "[!] Connection terminated with IP " << inet_ntoa(server_addr.sin_addr)<<endl;
         closesocket(server);
         WSACleanup();
-        isExit = false;
-        exit(1);
+        system("pause");
 }
 
 void Server::SendUsername()
@@ -291,14 +292,15 @@ void Server::sendRecvMsg()
             msg[0]='\0';
              do {
                  recv(server, buffer, BUFSIZE, 0);
-                 cout << buffer << " ";
-                 strcat(msg, buffer);
-                 strcat(msg, " ");
-                 if (*buffer == '#') {
-                     *buffer == '*';
+                 if (buffer[0] == '#') {
                      isExit = true;
+                     break;
                  }
+                 cout << buffer;
+                 strcat(msg, buffer);
              } while (*buffer != 10 && *buffer != 13);
+             if(isExit)
+                break;
              writeLog(msg, extUsername);
              msg[0] = '\0';
              timeStamp();
@@ -306,16 +308,16 @@ void Server::sendRecvMsg()
             fflush(stdin);
             do {
                  fgets(buffer, 1024, stdin);
+                 if (buffer[0] == '#') {
+                     send(server, "#", BUFSIZE, 0);
+                     isExit = true;
+                     break;
+                 }
                  send(server, buffer, BUFSIZE, 0);
                  strcat(msg, buffer);
-                 strcat(msg, " ");
-                 if (*buffer == '#') {
-                     send(server, "#", BUFSIZE, 0);
-                     *buffer = '*';
-                     isExit = true;
-                 }
              } while (*buffer != 10 && *buffer != 13);
-              writeLog(msg, "You");
+              if(!isExit)
+                writeLog(msg, "You");
          } while (!isExit);
     killSock();
     }while(!isExit);
@@ -473,30 +475,31 @@ void Client::sendRecvMsg()
         msg[0]='\0';
         do {
             fgets(buffer, 1024, stdin);
-            strcat(msg, buffer);
-            strcat(msg, " ");
-            send(client, buffer, BUFSIZE, 0);
-            if (*buffer == '#') {
-                send(client, buffer, BUFSIZE, 0);
-                *buffer = '*';
+            if (buffer[0] == '#') {
+                send(client, "#", BUFSIZE, 0);
                 isExit = true;
+                break;
             }
+            strcat(msg, buffer);
+            send(client, buffer, BUFSIZE, 0);
         } while (*buffer != 10 && *buffer != 13);
+        if(isExit)
+            break;
         writeLog(msg, "You");
         timeStamp();
         cout << extUsername << ": ";
         msg[0]='\0';
         do {
             recv(client, buffer, BUFSIZE, 0);
-            cout << buffer << " ";
-            strcat(msg, buffer);
-            strcat(msg, " ");
-            if (*buffer == '#') {
-                *buffer = '*';
+            if (buffer[0] == '#') {
                 isExit = true;
+                break;
             }
+            cout << buffer;
+            strcat(msg, buffer);
         } while (*buffer != 10 && *buffer != 13);
-        writeLog(msg, extUsername);
+        if(!isExit)
+            writeLog(msg, extUsername);
     } while (!isExit);
 
     KillSock();
@@ -507,7 +510,8 @@ void Client::KillSock()
         CloseLog();
         closesocket(client);
 	    WSACleanup();
-        cout << "[!] Connection terminated with server.";
+        cout << "[!] Connection terminated with server."<<endl;
+        system("pause");
 }
 
 /* END CLIENT CLASS DEFINITION
@@ -532,6 +536,7 @@ int main()
        cout<<"[6] Change username of existing chat history"<<endl;
        cout<<"[7] Exit"<<endl;
        cout<<"[*] Please enter your choice"<<endl;
+       cin.sync();
        cin>>ch;
        if(ch<1 || ch>7)
            flag = 1;
