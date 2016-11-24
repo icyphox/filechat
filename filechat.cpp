@@ -194,8 +194,8 @@ void Server::writeLog(char* mesg, char* uname)
     strcpy(l1.User, uname);
     time_t rawtime;
     struct tm * timeinfo;
-    time ( &rawtime );
-    timeinfo = localtime ( &rawtime );
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
     l1.year = timeinfo->tm_year + 1900;
     l1.mon = timeinfo->tm_mon + 1;
     l1.day = timeinfo->tm_mday;
