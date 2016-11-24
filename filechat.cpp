@@ -338,7 +338,7 @@ private:
     int BUFSIZE;
     int isExit;
     char buffer[1024];
-    char ip[12];
+    char ip[20];
     struct sockaddr_in serverAddr;
     WSADATA wsa;
     void KillSock();
